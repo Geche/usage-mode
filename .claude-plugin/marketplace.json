@@ -1,0 +1,13 @@
+{
+  "name": "usage-mode",
+  "owner": {
+    "name": "Geche"
+  },
+  "plugins": [
+    {
+      "name": "usage-mode",
+      "source": "./"
+    }
+  ],
+  "description": "Claude Code usage kept in view: plan limits, context fill and token burn beside the prompt."
+}

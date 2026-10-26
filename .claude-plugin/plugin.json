@@ -1,0 +1,10 @@
+{
+  "name": "usage-mode",
+  "version": "0.1.0",
+  "description": "Shows your Claude Code plan limits, context fill and token burn beside the prompt, with a full report in a pane.",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "Geche",
+    "url": "https://github.com/Geche"
+  }
+}

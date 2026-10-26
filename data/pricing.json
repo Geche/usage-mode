@@ -1,0 +1,46 @@
+{
+  "_README": "US dollars per million tokens, taken verbatim from Anthropic's pricing page — every rate is explicit, so none is derived from a multiplier. Cache reads do not follow a fixed fraction of input: Opus 5.5 and Sonnet 5.5 read at half the usual tenth, and Fable 5.1 at a quarter of it, so do not 'simplify' these back into multipliers. A model absent from this table is counted in tokens and reported as unpriced.",
+  "verifiedAt": "2026-10-26",
+  "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+  "unit": "usd per 1M tokens",
+  "models": {
+    "claude-fable-5-1": { "input": 10, "output": 50, "cacheWrite5m": 12.5, "cacheWrite1h": 20, "cacheRead": 0.25 },
+    "claude-mythos-5-1": { "input": 10, "output": 50, "cacheWrite5m": 12.5, "cacheWrite1h": 20, "cacheRead": 0.25 },
+    "claude-fable-5": { "input": 10, "output": 50, "cacheWrite5m": 12.5, "cacheWrite1h": 20, "cacheRead": 1 },
+    "claude-mythos-5": { "input": 10, "output": 50, "cacheWrite5m": 12.5, "cacheWrite1h": 20, "cacheRead": 1 },
+    "claude-opus-5-5": { "input": 4, "output": 20, "cacheWrite5m": 5, "cacheWrite1h": 8, "cacheRead": 0.2 },
+    "claude-opus-5": { "input": 5, "output": 25, "cacheWrite5m": 6.25, "cacheWrite1h": 10, "cacheRead": 0.5 },
+    "claude-opus-4-8": { "input": 5, "output": 25, "cacheWrite5m": 6.25, "cacheWrite1h": 10, "cacheRead": 0.5 },
+    "claude-opus-4-7": { "input": 5, "output": 25, "cacheWrite5m": 6.25, "cacheWrite1h": 10, "cacheRead": 0.5 },
+    "claude-opus-4-6": { "input": 5, "output": 25, "cacheWrite5m": 6.25, "cacheWrite1h": 10, "cacheRead": 0.5 },
+    "claude-opus-4-5": { "input": 5, "output": 25, "cacheWrite5m": 6.25, "cacheWrite1h": 10, "cacheRead": 0.5 },
+    "claude-opus-4-1": { "input": 15, "output": 75, "cacheWrite5m": 18.75, "cacheWrite1h": 30, "cacheRead": 1.5 },
+    "claude-sonnet-5-5": { "input": 2, "output": 10, "cacheWrite5m": 2.5, "cacheWrite1h": 4, "cacheRead": 0.1 },
+    "claude-sonnet-5": { "input": 2, "output": 10, "cacheWrite5m": 2.5, "cacheWrite1h": 4, "cacheRead": 0.2 },
+    "claude-sonnet-4-6": { "input": 3, "output": 15, "cacheWrite5m": 3.75, "cacheWrite1h": 6, "cacheRead": 0.3 },
+    "claude-sonnet-4-5": { "input": 3, "output": 15, "cacheWrite5m": 3.75, "cacheWrite1h": 6, "cacheRead": 0.3 },
+    "claude-haiku-5-5": {
+      "_README": "Priced by prompt size: the cheaper tier applies up to 100,000 prompt tokens, counting input, cache reads and cache writes together.",
+      "tiers": [
+        { "maxPromptTokens": 100000, "input": 0.1, "output": 0.5, "cacheWrite5m": 0.125, "cacheWrite1h": 0.2, "cacheRead": 0.01 },
+        { "input": 0.5, "output": 2.5, "cacheWrite5m": 0.625, "cacheWrite1h": 1, "cacheRead": 0.05 }
+      ]
+    },
+    "claude-haiku-4-5": { "input": 1, "output": 5, "cacheWrite5m": 1.25, "cacheWrite1h": 2, "cacheRead": 0.1 },
+    "claude-haiku-3-5": { "input": 0.8, "output": 4, "cacheWrite5m": 1, "cacheWrite1h": 1.6, "cacheRead": 0.08 }
+  },
+  "defaults": {
+    "_README": "Only used for a model that has `input` and `output` but no explicit cache rates.",
+    "cacheWrite5mMultiplier": 1.25,
+    "cacheWrite1hMultiplier": 2,
+    "cacheReadMultiplier": 0.1
+  },
+  "weights": {
+    "_README": "The weighted-token unit behind the burn rate and the projection. Output counts 5x input because every current model prices it that way; the cache figures stay round because this unit only has to be proportional to whatever a plan counts — the projection calibrates itself against the reported percentage. It is a pacing heuristic, never a billing figure.",
+    "input": 1,
+    "cacheWrite5m": 1.25,
+    "cacheWrite1h": 2,
+    "cacheRead": 0.1,
+    "output": 5
+  }
+}
