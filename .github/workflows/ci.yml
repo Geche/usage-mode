@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Weekly, to catch Claude Code moving under the mod rather than the mod breaking.
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Pinned so a release of Claude Code cannot turn a green branch red on its own.
+  # The weekly engine-latest job is what reports that instead.
+  CLAUDE_CODE_VERSION: '2.1.311'
+
+jobs:
+  indexer:
+    name: Indexer (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 20 is the floor: the indexer uses import.meta.dirname, added in 20.11.
+        node: ['20', '22', '24']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Syntax-check the indexer
+        run: node --check scripts/index.mjs
+      - name: Test the indexer and the pricing table
+        run: node --test scripts/*.test.mjs
+
+  mod:
+    name: Mod (pinned Claude Code)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code@${{ env.CLAUDE_CODE_VERSION }}
+      # Both commands run without credentials: validate reads the manifest and
+      # the module's source, and the tests run against the kit's own mocks.
+      - name: Validate the manifest, the marketplace file and the hooks module
+        run: claude plugin validate . --strict
+      - name: Run the mod's tests
+        run: claude plugin test .
+
+  engine-latest:
+    name: Mod against the latest Claude Code
+    # Drift detection only — not a gate on a pull request.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install the latest Claude Code
+        run: |
+          npm install -g @anthropic-ai/claude-code@latest
+          claude --version
+      - name: Validate the manifest, the marketplace file and the hooks module
+        run: claude plugin validate . --strict
+      - name: Run the mod's tests
+        run: claude plugin test .

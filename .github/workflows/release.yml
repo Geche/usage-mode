@@ -1,0 +1,74 @@
+name: Release
+
+on:
+  push:
+    tags: ['usage-mode--v*']
+
+permissions:
+  contents: write
+
+env:
+  CLAUDE_CODE_VERSION: '2.1.311'
+
+jobs:
+  release:
+    name: Release ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The whole history, so the release notes can be built from it.
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Check the tag agrees with the manifest
+        run: node scripts/check-release-tag.mjs "$GITHUB_REF_NAME"
+
+      - name: Syntax-check the indexer
+        run: node --check scripts/index.mjs
+      - name: Test the indexer and the pricing table
+        run: node --test scripts/*.test.mjs
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code@${{ env.CLAUDE_CODE_VERSION }}
+      - name: Validate the manifest, the marketplace file and the hooks module
+        run: claude plugin validate . --strict
+      - name: Run the mod's tests
+        run: claude plugin test .
+
+      - name: Write the release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          previous="$(git tag --list 'usage-mode--v*' --sort=-version:refname | grep -v "^${GITHUB_REF_NAME}$" | head -1 || true)"
+          {
+            echo "## Installing"
+            echo
+            echo '```'
+            echo "/plugin install usage-mode --marketplace ${GITHUB_REPOSITORY}"
+            echo '```'
+            echo
+            echo "Typed at the prompt of a terminal session: answer \`y\` to add the marketplace, then Enter for the user scope."
+            echo
+          } > notes.md
+          # Let GitHub write the change list; it reads the commits since the previous tag.
+          gh api "repos/${GITHUB_REPOSITORY}/releases/generate-notes" \
+            -f tag_name="${GITHUB_REF_NAME}" \
+            ${previous:+-f previous_tag_name="${previous}"} \
+            -q .body >> notes.md
+          echo "--- notes.md ---"
+          cat notes.md
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#usage-mode--v}"
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "usage-mode ${version}" \
+            --notes-file notes.md \
+            --verify-tag

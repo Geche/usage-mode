@@ -1,5 +1,7 @@
 # usage-mode
 
+[![CI](https://github.com/Geche/usage-mode/actions/workflows/ci.yml/badge.svg)](https://github.com/Geche/usage-mode/actions/workflows/ci.yml)
+
 Keeps your Claude Code usage in view: a row above the prompt showing every plan
 window, the context fill and your current token burn, with a fuller report in a
 pane and the same figures as text from `/usage-report`.
@@ -40,6 +42,16 @@ claude plugin install usage-mode --marketplace Geche/usage-mode
 In the desktop app, where `/plugin` does not run: click + beside the prompt box,
 then Plugins, then Add marketplace with `Geche/usage-mode`, then Add plugin.
 
+## Using it
+
+- The band draws itself once the first reading lands; `Hide` puts it away for
+  the session.
+- `/usage-report` opens the pane and prints the same figures, so it still works
+  where a pane has no room.
+- `Refresh` re-runs the indexer; `Rebuild index` re-reads every transcript from
+  the top.
+- Nothing leaves the machine, and no transcript content is read into the
+  rollup — only counts.
 ## Burn rate and the projection
 
 The engine reports when the five-hour window resets, so its start is known
@@ -71,13 +83,52 @@ unpriced rather than guessed at, so no figure here is one the mod invented.
 The dollar columns are *equivalent API spend* — what this usage would have cost
 through the API. On a subscription they are a sense of scale, not a bill.
 
-## Using it
+## Developing
 
-- The band draws itself once the first reading lands; `Hide` puts it away for
-  the session.
-- `/usage-report` opens the pane and prints the same figures, so it still works
-  where a pane has no room.
-- `Refresh` re-runs the indexer; `Rebuild index` re-reads every transcript from
-  the top.
-- Nothing leaves the machine, and no transcript content is read into the
-  rollup — only counts.
+Four commands, and the first two need no Claude Code at all:
+
+```
+node --check scripts/index.mjs
+node --test scripts/*.test.mjs
+claude plugin validate . --strict
+claude plugin test .
+```
+
+The indexer tests build throwaway transcript trees and run the indexer over
+them, so they cover the arithmetic that matters: deduplication across
+transcripts, the byte offsets behind incremental runs, a half-written last line,
+a rotated file, the two cache-write lifetimes, prompt-size tiers, the retention
+horizon, and every rate in `data/pricing.json`. `claude plugin validate` reads
+the manifests and the hooks module the way the engine will, and `claude plugin
+test` runs the mod's own tests against each surface it draws on.
+
+Type-checking is a local step only: `tsc -p .` needs the declarations the engine
+writes into `.claude-plugin/types/` when it loads the mod, and those are
+per-machine and not in the repository. CI covers the module by running it
+instead.
+
+To run the mod from this folder while working on it:
+
+```
+claude --plugin-dir .
+```
+
+CI runs all four commands on every push and pull request — the indexer tests on
+Node 20, 22 and 24, and the Claude Code steps against a pinned version, with a
+weekly run against the latest release to catch the engine moving underneath.
+
+## Releasing
+
+The version in `.claude-plugin/plugin.json` is the one that counts. Bump it,
+commit, then:
+
+```
+claude plugin tag . --push
+```
+
+That creates and pushes `usage-mode--v<version>`, checking first that the
+manifest and the marketplace entry agree. The push starts the release workflow,
+which re-runs every check, refuses a tag that disagrees with the manifest, and
+publishes a GitHub release whose notes carry the install line and the commits
+since the previous tag.
+

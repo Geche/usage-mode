@@ -16,7 +16,8 @@ import { basename, join } from 'node:path'
 const args = process.argv.slice(2)
 const flag = name => args.includes(`--${name}`)
 const value = (name, fallback) => {
-  const at = args.indexOf(`--${name}`)
+  // Last wins, as a shell flag usually does, so a caller can override a default.
+  const at = args.lastIndexOf(`--${name}`)
   return at === -1 || at === args.length - 1 ? fallback : args[at + 1]
 }
 
